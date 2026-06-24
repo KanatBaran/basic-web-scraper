@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Görsel Web Scraper | Finansman Kampanya Metin Toplayıcı</title>
+    <!-- Google Fonts: Inter ve JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <!-- Üst Menü Toolbar -->
+    <header class="toolbar">
+        <div class="brand">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            Visual Scraper <span>| Picker</span>
+        </div>
+
+        <form class="url-form" id="url-form">
+            <div class="url-input-container">
+                <input type="url" id="url-input" class="url-input"
+                    placeholder="Hedef katılım bankası kampanya veya ürün URL'si girin (örn: https://www.albaraka.com.tr/...)"
+                    required>
+            </div>
+            <button type="submit" class="btn btn-primary" id="btn-load">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+                Sayfayı Aç
+            </button>
+            <div class="switch-container" id="selection-switch-container">
+                <span id="switch-label">İzleme Modu</span>
+                <label class="switch">
+                    <input type="checkbox" id="selection-toggle" disabled>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <button type="button" class="btn btn-danger" id="btn-clear">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                Temizle
+            </button>
+        </form>
+    </header>
+
+    <!-- Ana Çalışma Bölgesi -->
+    <main class="workspace">
+        <!-- Sol Bölüm - Web Sayfası Önizleme -->
+        <section class="preview-pane">
+            <!-- Yükleniyor Ekranı -->
+            <div class="loading-overlay" id="loading-overlay">
+                <div class="spinner"></div>
+                <p id="loading-status">Web sayfası çekiliyor ve picker scripti enjekte ediliyor...</p>
+            </div>
+
+            <!-- Başlangıç Placeholder Görseli -->
+            <div class="iframe-placeholder" id="iframe-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="9" y1="3" x2="9" y2="21"></line>
+                </svg>
+                <h3>Görsel Seçici Çalışma Alanı</h3>
+                <p>Bir banka web adresi girip "Sayfayı Aç" butonuna basın. Sayfa yüklendiğinde, mouse ile metin
+                    elementlerinin üzerine gelip tıklayarak doğrudan seçim yapabilirsiniz.</p>
+            </div>
+
+            <!-- Web Sayfasını Gösteren Iframe -->
+            <iframe id="preview-frame" sandbox="allow-same-origin allow-scripts" style="display:none;"></iframe>
+        </section>
+
+        <!-- Sağ Bölüm - Seçilen Metinler Paneli -->
+        <section class="control-panel" style="display: flex; flex-direction: column; height: 100%;">
+            <!-- Sekmeler Başlığı -->
+            <div class="panel-section" style="padding: 0; background-color: #121215; border-bottom: 1px solid var(--border-color);">
+                <div class="tabs-header" style="border-bottom: none; margin-bottom: 0; padding: 6px 20px;">
+                    <button type="button" class="tab-btn active" id="tab-selections" style="padding-bottom: 10px; margin-top: 4px;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; margin-top: -2px;">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="3" x2="9" y2="21"></line>
+                        </svg>Seçilen Metinler
+                    </button>
+                    <button type="button" class="tab-btn" id="tab-json" style="padding-bottom: 10px; margin-top: 4px;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px; margin-top: -2px;">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg>JSON Çıktısı
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-copy-active" id="btn-copy" title="JSON Çıktısını Kopyala" style="display: none; margin-left: auto;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Kopyala
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 1: Seçilen Kartlar Listesi -->
+            <div class="selection-list-container" id="selection-list" style="flex-grow: 1; overflow-y: auto;">
+                <div class="empty-selection-msg" id="empty-msg">
+                    Henüz bir metin seçmediniz.<br>
+                    Sol taraftaki web sayfasından mouse ile metin seçimi yapın.
+                </div>
+            </div>
+
+            <!-- Tab 2: JSON Çıktısı -->
+            <div class="json-container" id="json-container" style="display: none; flex-grow: 1; padding: 20px; height: calc(100% - 49px); overflow: hidden;">
+                <textarea class="combined-textarea" id="combined-json" readonly
+                    placeholder="Seçilen elementlerin blok yapısı JSON formatında burada görüntülenecektir..."
+                    style="width: 100%; height: 100%; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; background-color: #121214; border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-main); padding: 12px; resize: none; outline: none;"></textarea>
+            </div>
+        </section>
+        </section>
+    </main>
+
+    <!-- Bildirim Balonu -->
+    <div class="toast" id="toast">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span id="toast-message">Kopyalandı!</span>
+    </div>
+
+    <!-- Uygulama Arayüz Kontrolleri -->
+    <script src="/static/main.js"></script>
+</body>
+
+</html>
